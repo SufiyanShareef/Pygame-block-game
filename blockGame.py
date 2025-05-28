@@ -17,28 +17,29 @@ PURPLE = (128, 0, 128)
 RED = (255, 0, 0)
 
 # Game settings
-BLOCK_SIZE = 30
-GRID_WIDTH = 10
-GRID_HEIGHT = 20
+BLOCK_SIZE = 30   # Size of each block in pixels
+GRID_WIDTH = 10   # Width of the game grid (10 blocks)
+GRID_HEIGHT = 20  # Height of the game grid (20 blocks)
 SCREEN_WIDTH = BLOCK_SIZE * (GRID_WIDTH + 6)
 SCREEN_HEIGHT = BLOCK_SIZE * GRID_HEIGHT
 GAME_AREA_LEFT = BLOCK_SIZE
 
 # Tetrimino shapes
 SHAPES = [
-    [[1, 1, 1, 1]],  # I
-    [[1, 1], [1, 1]],  # O
-    [[1, 1, 1], [0, 1, 0]],  # T
-    [[1, 1, 1], [1, 0, 0]],  # J
-    [[1, 1, 1], [0, 0, 1]],  # L
-    [[0, 1, 1], [1, 1, 0]],  # S
-    [[1, 1, 0], [0, 1, 1]]   # Z
+    [[1, 1, 1, 1]],  # I-Piece
+    [[1, 1], [1, 1]],  # O-piece
+    [[1, 1, 1], [0, 1, 0]],  # T-piece
+    [[1, 1, 1], [1, 0, 0]],  # J-piece
+    [[1, 1, 1], [0, 0, 1]],  # L-piece
+    [[0, 1, 1], [1, 1, 0]],  # S-piece
+    [[1, 1, 0], [0, 1, 1]]   # Z-piece
 ]
 
 SHAPE_COLORS = [CYAN, YELLOW, PURPLE, BLUE, ORANGE, GREEN, RED]
 
 class Tetrimino:
     def __init__(self):
+        # Starting point 
         self.shape_idx = random.randint(0, len(SHAPES) - 1)
         self.shape = SHAPES[self.shape_idx]
         self.color = SHAPE_COLORS[self.shape_idx]
@@ -59,6 +60,8 @@ class Tetrimino:
 
 class BlockGame:
     def __init__(self):
+
+        #Game Window
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Block Game")
         self.clock = pygame.time.Clock()
@@ -66,6 +69,7 @@ class BlockGame:
         self.reset_game()
         
     def reset_game(self):
+        #reset block
         self.grid = [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
         self.current_piece = Tetrimino()
         self.next_piece = Tetrimino()
@@ -101,6 +105,7 @@ class BlockGame:
                                      BLOCK_SIZE - 2, BLOCK_SIZE - 2))
                     
     def draw_current_piece(self):
+         # Draws the currently falling piece
         for y in range(len(self.current_piece.shape)):
             for x in range(len(self.current_piece.shape[0])):
                 if self.current_piece.shape[y][x]:
@@ -125,6 +130,7 @@ class BlockGame:
                                      BLOCK_SIZE - 2, BLOCK_SIZE - 2))
     
     def draw_score(self):
+        # Draws score, level, and lines cleared
         score_text = self.font.render(f"Score: {self.score}", True, WHITE)
         level_text = self.font.render(f"Level: {self.level}", True, WHITE)
         lines_text = self.font.render(f"Lines: {self.lines_cleared}", True, WHITE)
@@ -134,6 +140,7 @@ class BlockGame:
         self.screen.blit(lines_text, (GAME_AREA_LEFT + GRID_WIDTH * BLOCK_SIZE + 20, 260))
     
     def draw_game_over(self):
+        # Shows "GAME OVER" message when appropriate
         if self.game_over:
             game_over_text = self.font.render("GAME OVER", True, RED)
             restart_text = self.font.render("Press R to restart", True, WHITE)
@@ -144,6 +151,8 @@ class BlockGame:
                                           GRID_HEIGHT * BLOCK_SIZE // 2 + 10))
     
     def valid_position(self, shape=None, x=None, y=None):
+         # Checks if a piece can be placed at given position
+        # Prevents out-of-bounds and collisions
         if shape is None:
             shape = self.current_piece.shape
         if x is None:
@@ -164,12 +173,15 @@ class BlockGame:
         return True
     
     def merge_piece(self):
+        # Adds the current piece to the grid when it lands
         for y in range(len(self.current_piece.shape)):
             for x in range(len(self.current_piece.shape[0])):
                 if self.current_piece.shape[y][x]:
                     self.grid[self.current_piece.y + y][self.current_piece.x + x] = self.current_piece.shape_idx + 1
     
     def clear_lines(self):
+         # Checks for completed lines, removes them, and updates score
+        # Scoring: 100 for 1 line, 300 for 2, 500 for 3, 800 for 4 (Tetris)
         lines_to_clear = []
         for y in range(GRID_HEIGHT):
             if all(self.grid[y]):
@@ -187,6 +199,7 @@ class BlockGame:
             self.fall_speed = max(0.05, 0.5 - (self.level - 1) * 0.05)
     
     def new_piece(self):
+        # Spawns a new piece and checks for game over
         self.current_piece = self.next_piece
         self.next_piece = Tetrimino()
         
@@ -195,6 +208,11 @@ class BlockGame:
             self.game_over = True
     
     def handle_input(self):
+        # Processes keyboard input:
+        # - Arrow keys for movement
+        # - Up for rotation
+        # - Space for hard drop
+        # - R to restart
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
@@ -251,17 +269,22 @@ class BlockGame:
         pygame.display.flip()
     
     def run(self):
+        #game loop 
         running = True
         last_time = pygame.time.get_ticks()
         
         while running:
+            # Calculate time since last frame
             current_time = pygame.time.get_ticks()
             delta_time = (current_time - last_time) / 1000.0  # Convert to seconds
             last_time = current_time
             
+            # Handle input, update game state, draw frame
             running = self.handle_input()
             self.update(delta_time)
             self.draw()
+            
+            # Cap at 60 FPS
             self.clock.tick(60)
         
         pygame.quit()
